@@ -1,0 +1,2342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ferretería El Tornillo | Gestión de Inventario y Proveedores</title>
+  <meta name="description" content="Sistema de gestión de artículos, proveedores y control de stock en tiempo real para Ferretería El Tornillo." />
+
+  <style>
+    :root {
+      --bg-body: #f4f5f7;
+      --bg-surface: #ffffff;
+      --bg-surface-alt: #f8fafc;
+      --bg-header: #111827;
+      --text-primary: #111827;
+      --text-secondary: #4b5563;
+      --text-muted: #6b7280;
+      --text-on-dark: #f9fafb;
+      --border-color: #e5e7eb;
+      --accent: #ea580c;
+      --accent-hover: #c2410c;
+      --accent-soft: rgba(234, 88, 12, 0.12);
+      --danger: #dc2626;
+      --danger-soft: rgba(220, 38, 38, 0.12);
+      --danger-border: rgba(220, 38, 38, 0.45);
+      --success: #16a34a;
+      --success-soft: rgba(22, 163, 74, 0.14);
+      --warning: #d97706;
+      --warning-soft: rgba(217, 119, 6, 0.14);
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+      --shadow-md: 0 6px 18px rgba(15, 23, 42, 0.09);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --transition: 0.2s ease;
+    }
+
+    [data-theme="dark"] {
+      --bg-body: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-surface-alt: #263348;
+      --bg-header: #090d16;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --text-on-dark: #f8fafc;
+      --border-color: #334155;
+      --accent: #f97316;
+      --accent-hover: #ea580c;
+      --accent-soft: rgba(249, 115, 22, 0.18);
+      --danger: #f87171;
+      --danger-soft: rgba(248, 113, 113, 0.16);
+      --danger-border: rgba(248, 113, 113, 0.5);
+      --success: #4ade80;
+      --success-soft: rgba(74, 222, 128, 0.15);
+      --warning: #fbbf24;
+      --warning-soft: rgba(251, 191, 36, 0.15);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color var(--transition), color var(--transition);
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    /* Header & Navigation */
+    .site-header {
+      background-color: var(--bg-header);
+      color: var(--text-on-dark);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-bottom: 3px solid var(--accent);
+      box-shadow: var(--shadow-md);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      min-height: 68px;
+      flex-wrap: wrap;
+      padding: 0.5rem 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      text-decoration: none;
+      color: var(--text-on-dark);
+      font-weight: 800;
+      font-size: 1.125rem;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .theme-btn, .menu-toggle {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-on-dark);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: var(--radius-sm);
+      min-height: 44px;
+      min-width: 44px;
+      padding: 0.5rem 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+
+    .theme-btn:hover, .menu-toggle:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .main-nav {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      gap: 0.4rem;
+      padding: 0.5rem 0 0.75rem;
+    }
+
+    .main-nav.open {
+      display: flex;
+    }
+
+    .nav-btn {
+      background: transparent;
+      color: #cbd5e1;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      min-height: 44px;
+      padding: 0.55rem 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-align: left;
+      transition: all var(--transition);
+    }
+
+    .nav-btn:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    @media (min-width: 768px) {
+      .menu-toggle {
+        display: none;
+      }
+      .header-inner {
+        flex-wrap: nowrap;
+      }
+      .main-nav {
+        display: flex;
+        width: auto;
+        flex-direction: row;
+        padding: 0;
+        margin-left: auto;
+        margin-right: 0.5rem;
+      }
+    }
+
+    /* Main Content */
+    main {
+      flex: 1;
+      padding: 1.25rem 0 3rem;
+    }
+
+    .config-banner {
+      background: var(--warning-soft);
+      border: 1px solid var(--warning);
+      color: var(--text-primary);
+      padding: 0.9rem 1rem;
+      border-radius: var(--radius);
+      margin-bottom: 1.25rem;
+      display: none;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .config-banner.visible {
+      display: flex;
+    }
+
+    .view-section {
+      display: none;
+    }
+
+    .view-section.active {
+      display: block;
+      animation: fadeIn 0.22s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      min-height: 300px;
+      display: flex;
+      align-items: flex-end;
+      background-color: #1f2937;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.45);
+    }
+
+    .hero-overlay {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      padding: 2rem 1.25rem;
+      background: linear-gradient(to top, rgba(9, 13, 22, 0.92), rgba(9, 13, 22, 0.35), transparent);
+      color: #ffffff;
+    }
+
+    @media (min-width: 768px) {
+      .hero {
+        min-height: 360px;
+      }
+      .hero-overlay {
+        padding: 2.75rem 2.5rem;
+      }
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero h1 {
+      margin: 0 0 0.5rem;
+      font-size: clamp(1.75rem, 4vw, 2.6rem);
+      line-height: 1.15;
+    }
+
+    .hero p {
+      margin: 0 0 1.25rem;
+      max-width: 650px;
+      color: #e2e8f0;
+      font-size: 1.02rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    /* Buttons */
+    .btn {
+      min-height: 44px;
+      padding: 0.6rem 1.1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      transition: all var(--transition);
+      text-decoration: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--bg-surface-alt);
+    }
+
+    .btn-outline-light {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+
+    .btn-outline-light:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #ffffff;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      filter: brightness(0.92);
+    }
+
+    .btn-sm {
+      min-height: 40px;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    /* Summary Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
+
+    @media (min-width: 640px) {
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .stat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-card.alert-card {
+      border-color: var(--danger-border);
+      background: linear-gradient(135deg, var(--bg-surface), var(--danger-soft));
+    }
+
+    .stat-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: var(--accent-soft);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .stat-card.alert-card .stat-icon {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .stat-info h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .stat-value {
+      font-size: 1.85rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-top: 0.15rem;
+    }
+
+    .stat-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Section Header & Toolbar */
+    .section-header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    @media (min-width: 640px) {
+      .section-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+    }
+
+    .section-header h2 {
+      margin: 0;
+      font-size: 1.45rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toolbar {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 0.9rem;
+      box-shadow: var(--shadow-sm);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    @media (min-width: 768px) {
+      .toolbar {
+        grid-template-columns: 2fr 1.2fr auto auto;
+        align-items: center;
+      }
+    }
+
+    .input-control, .select-control {
+      width: 100%;
+      min-height: 44px;
+      padding: 0.55rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface-alt);
+      color: var(--text-primary);
+      transition: border-color var(--transition);
+    }
+
+    .input-control:focus, .select-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .view-toggle-group {
+      display: inline-flex;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .view-toggle-btn {
+      min-height: 44px;
+      padding: 0.5rem 0.85rem;
+      background: var(--bg-surface-alt);
+      color: var(--text-secondary);
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .view-toggle-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    /* Product Cards Grid */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .cards-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .product-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow var(--transition), border-color var(--transition);
+    }
+
+    .product-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .product-card.low-stock {
+      border: 2px solid var(--danger);
+      background: linear-gradient(to bottom, var(--danger-soft), var(--bg-surface) 90px);
+    }
+
+    .product-media {
+      position: relative;
+      height: 185px;
+      background: var(--bg-surface-alt);
+      overflow: hidden;
+    }
+
+    .product-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .category-pill {
+      position: absolute;
+      top: 0.65rem;
+      left: 0.65rem;
+      background: rgba(17, 24, 39, 0.82);
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      backdrop-filter: blur(4px);
+    }
+
+    .stock-badge {
+      position: absolute;
+      top: 0.65rem;
+      right: 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      background: var(--success);
+      color: #ffffff;
+    }
+
+    .stock-badge.low {
+      background: var(--danger);
+      color: #ffffff;
+      animation: pulseBadge 2s infinite;
+    }
+
+    @keyframes pulseBadge {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+
+    .product-body {
+      padding: 1rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .product-title {
+      margin: 0;
+      font-size: 1.08rem;
+      font-weight: 700;
+    }
+
+    .product-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
+    .product-price {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .product-supplier {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    /* Stock Control Widget */
+    .stock-control-box {
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem;
+      margin-top: auto;
+    }
+
+    .product-card.low-stock .stock-control-box {
+      border-color: var(--danger-border);
+      background: var(--danger-soft);
+    }
+
+    .stock-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 0.45rem;
+    }
+
+    .stock-label-row.low {
+      color: var(--danger);
+    }
+
+    .stock-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .stock-step-btn {
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: background var(--transition);
+    }
+
+    .stock-step-btn:hover:not(:disabled) {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .stock-input {
+      width: 100%;
+      min-width: 56px;
+      min-height: 44px;
+      text-align: center;
+      font-weight: 700;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      padding: 0.25rem;
+    }
+
+    .stock-apply-btn {
+      min-height: 44px;
+      padding: 0 0.7rem;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: var(--bg-header);
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .stock-apply-btn:hover:not(:disabled) {
+      background: var(--accent);
+    }
+
+    .card-footer-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Tables with Horizontal Scroll on Mobile */
+    .table-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 680px;
+    }
+
+    th, td {
+      padding: 0.85rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    th {
+      background: var(--bg-surface-alt);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      font-weight: 700;
+    }
+
+    tr.low-stock-row {
+      background: var(--danger-soft);
+    }
+
+    tr.low-stock-row td:first-child {
+      box-shadow: inset 4px 0 0 var(--danger);
+    }
+
+    .table-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--border-color);
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .low-stock-text {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    /* Panel / Empty State */
+    .panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--text-muted);
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.68);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 100;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 92vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      animation: fadeIn 0.18s ease;
+    }
+
+    .modal-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .modal-close {
+      min-width: 44px;
+      min-height: 44px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 1.4rem;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+    }
+
+    .modal-close:hover {
+      background: var(--bg-surface-alt);
+    }
+
+    .modal-body {
+      padding: 1.25rem;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    @media (min-width: 480px) {
+      .form-row-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+
+    .form-error {
+      background: var(--danger-soft);
+      border: 1px solid var(--danger-border);
+      color: var(--danger);
+      padding: 0.65rem 0.85rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: none;
+    }
+
+    .form-error.visible {
+      display: block;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    /* Toasts */
+    .toast-container {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      left: 1rem;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+
+    @media (min-width: 640px) {
+      .toast-container {
+        left: auto;
+        width: 360px;
+      }
+    }
+
+    .toast {
+      pointer-events: auto;
+      background: var(--bg-header);
+      color: #ffffff;
+      padding: 0.85rem 1rem;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-md);
+      border-left: 4px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-weight: 500;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .toast.success { border-left-color: var(--success); }
+    .toast.error { border-left-color: var(--danger); }
+
+    /* Footer */
+    footer {
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-color);
+      padding: 1.25rem 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .chip-btn {
+      min-height: 44px;
+      padding: 0.5rem 0.9rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface-alt);
+      color: var(--text-primary);
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      white-space: nowrap;
+    }
+
+    .chip-btn.active {
+      background: var(--danger-soft);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .loading-bar {
+      height: 3px;
+      background: var(--accent);
+      width: 100%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 300;
+      display: none;
+      animation: loadingPulse 1s infinite ease-in-out;
+    }
+
+    .loading-bar.active {
+      display: block;
+    }
+
+    @keyframes loadingPulse {
+      0% { opacity: 0.4; }
+      50% { opacity: 1; }
+      100% { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loadingBar" class="loading-bar" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#inicio" class="brand" data-nav="inicio">
+        <span class="brand-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+          </svg>
+        </span>
+        <span>Ferretería El Tornillo</span>
+      </a>
+
+      <div class="header-controls">
+        <button id="themeToggle" class="theme-btn" type="button" aria-label="Cambiar tema claro u oscuro" title="Cambiar tema">
+          <span id="themeIcon">🌙</span>
+        </button>
+        <button id="menuToggle" class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <nav id="mainNav" class="main-nav" aria-label="Navegación principal">
+        <button type="button" class="nav-btn active" data-nav="inicio">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          Inicio
+        </button>
+        <button type="button" class="nav-btn" data-nav="articulos">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          Artículos
+        </button>
+        <button type="button" class="nav-btn" data-nav="proveedores">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+          Proveedores
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="configBanner" class="config-banner" role="alert">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0;color:var(--warning)">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+      <div>
+        <strong>Configuración de Supabase pendiente:</strong> Edita el archivo <code>config.js</code> y coloca tu <code>SUPABASE_URL</code> y tu clave pública <code>SUPABASE_KEY</code> (anon/publishable) para habilitar la persistencia en la base de datos.
+      </div>
+    </div>
+
+    <!-- VISTA INICIO -->
+    <section id="view-inicio" class="view-section active" aria-labelledby="hero-title">
+      <div class="hero">
+        <img
+          src="https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1400&q=80&auto=format&fit=crop"
+          alt="Herramientas organizadas en taller de Ferretería El Tornillo"
+          class="hero-img"
+          id="heroImage"
+        />
+        <div class="hero-overlay">
+          <span class="hero-badge">Sistema de Ferretería</span>
+          <h1 id="hero-title">Ferretería El Tornillo</h1>
+          <p>
+            Soluciones integrales en herramientas, fijaciones, pintura y materiales de construcción.
+            Administra nuestro catálogo, actualiza existencias al instante y coordina entregas con proveedores.
+          </p>
+          <div class="hero-actions">
+            <button type="button" class="btn btn-primary" data-nav="articulos">
+              Gestionar Artículos y Stock
+            </button>
+            <button type="button" class="btn btn-outline-light" data-nav="proveedores">
+              Ver Proveedores
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card" id="cardTotalArticulos" role="button" tabindex="0">
+          <div class="stat-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <h3>Total de Artículos</h3>
+            <div class="stat-value" id="statTotalArticulos">0</div>
+            <div class="stat-sub" id="statTotalUnidades">0 unidades en inventario</div>
+          </div>
+        </div>
+
+        <div class="stat-card" id="cardTotalProveedores" role="button" tabindex="0">
+          <div class="stat-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <h3>Proveedores Activos</h3>
+            <div class="stat-value" id="statTotalProveedores">0</div>
+            <div class="stat-sub">Socios comerciales registrados</div>
+          </div>
+        </div>
+
+        <div class="stat-card" id="cardStockBajo" role="button" tabindex="0">
+          <div class="stat-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <h3>Stock Bajo (≤ 5)</h3>
+            <div class="stat-value" id="statStockBajo">0</div>
+            <div class="stat-sub">Clic para ver alertas</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-header" style="margin-bottom:0.85rem;">
+          <h2 style="font-size:1.2rem;">Reposición Rápida (Stock ≤ 5)</h2>
+          <button type="button" class="btn btn-secondary btn-sm" data-nav="articulos">Ver catálogo completo</button>
+        </div>
+        <div id="lowStockQuickList"></div>
+      </div>
+    </section>
+
+    <!-- VISTA ARTÍCULOS -->
+    <section id="view-articulos" class="view-section" aria-labelledby="articulos-title">
+      <div class="section-header">
+        <h2 id="articulos-title">Catálogo de Artículos y Control de Stock</h2>
+        <button type="button" class="btn btn-primary" id="btnNuevoArticulo">
+          + Nuevo Artículo
+        </button>
+      </div>
+
+      <div class="toolbar">
+        <input
+          type="search"
+          id="searchArticulos"
+          class="input-control"
+          placeholder="Buscar por nombre, categoría o proveedor..."
+          aria-label="Buscar artículos"
+        />
+        <select id="filterCategoria" class="select-control" aria-label="Filtrar por categoría">
+          <option value="todas">Todas las categorías</option>
+        </select>
+        <button type="button" id="btnToggleLowStock" class="chip-btn" aria-pressed="false">
+          ⚠ Stock bajo (≤ 5)
+        </button>
+        <div class="view-toggle-group" role="group" aria-label="Cambiar vista de artículos">
+          <button type="button" class="view-toggle-btn active" data-display="cards">Tarjetas</button>
+          <button type="button" class="view-toggle-btn" data-display="table">Tabla</button>
+        </div>
+      </div>
+
+      <div id="articulosContainer"></div>
+    </section>
+
+    <!-- VISTA PROVEEDORES -->
+    <section id="view-proveedores" class="view-section" aria-labelledby="proveedores-title">
+      <div class="section-header">
+        <h2 id="proveedores-title">Directorio de Proveedores</h2>
+        <button type="button" class="btn btn-primary" id="btnNuevoProveedor">
+          + Nuevo Proveedor
+        </button>
+      </div>
+
+      <div id="proveedoresContainer"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <strong>Ferretería El Tornillo</strong> · Control de Inventario y Proveedores · Persistido con Supabase
+    </div>
+  </footer>
+
+  <!-- MODAL ARTÍCULO -->
+  <div id="modalArticulo" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalArticuloTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalArticuloTitle">Nuevo Artículo</h3>
+        <button type="button" class="modal-close" data-close-modal="modalArticulo" aria-label="Cerrar">&times;</button>
+      </div>
+      <form id="formArticulo" novalidate>
+        <div class="modal-body form-grid">
+          <div id="errorArticulo" class="form-error"></div>
+
+          <div class="form-group">
+            <label for="artNombre">Nombre del artículo *</label>
+            <input type="text" id="artNombre" class="input-control" placeholder="Ej: Taladro Percutor 650W" required />
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="artCategoria">Categoría *</label>
+              <select id="artCategoria" class="select-control" required>
+                <option value="">Selecciona una categoría</option>
+                <option value="Herramientas Eléctricas">Herramientas Eléctricas</option>
+                <option value="Herramientas Manuales">Herramientas Manuales</option>
+                <option value="Fijaciones y Tornillería">Fijaciones y Tornillería</option>
+                <option value="Pinturas y Acabados">Pinturas y Acabados</option>
+                <option value="Plomería">Plomería</option>
+                <option value="Electricidad">Electricidad</option>
+                <option value="Construcción">Construcción</option>
+                <option value="Seguridad Industrial">Seguridad Industrial</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="artProveedor">Proveedor *</label>
+              <select id="artProveedor" class="select-control" required>
+                <option value="">Selecciona un proveedor</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="artPrecio">Precio (USD) *</label>
+              <input type="number" id="artPrecio" class="input-control" min="0" step="0.01" placeholder="0.00" required />
+            </div>
+
+            <div class="form-group">
+              <label for="artStock">Stock inicial *</label>
+              <input type="number" id="artStock" class="input-control" min="0" step="1" placeholder="0" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="artImagen">URL de imagen (opcional)</label>
+            <input type="url" id="artImagen" class="input-control" placeholder="https://images.unsplash.com/..." />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="modalArticulo">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnGuardarArticulo">Guardar Artículo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PROVEEDOR -->
+  <div id="modalProveedor" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalProveedorTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalProveedorTitle">Nuevo Proveedor</h3>
+        <button type="button" class="modal-close" data-close-modal="modalProveedor" aria-label="Cerrar">&times;</button>
+      </div>
+      <form id="formProveedor" novalidate>
+        <div class="modal-body form-grid">
+          <div id="errorProveedor" class="form-error"></div>
+
+          <div class="form-group">
+            <label for="provNombre">Nombre o Razón Social *</label>
+            <input type="text" id="provNombre" class="input-control" placeholder="Ej: Distribuidora Aceros del Sur" required />
+          </div>
+
+          <div class="form-group">
+            <label for="provTelefono">Teléfono *</label>
+            <input type="tel" id="provTelefono" class="input-control" placeholder="Ej: +595 981 123 456" required />
+          </div>
+
+          <div class="form-group">
+            <label for="provEmail">Correo electrónico *</label>
+            <input type="email" id="provEmail" class="input-control" placeholder="ventas@proveedor.com" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="modalProveedor">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnGuardarProveedor">Guardar Proveedor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIRMACIÓN ELIMINAR -->
+  <div id="modalConfirm" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalConfirmTitle">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <h3 id="modalConfirmTitle">Confirmar eliminación</h3>
+        <button type="button" class="modal-close" data-close-modal="modalConfirm" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="modalConfirmMessage" style="margin:0;"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="modalConfirm">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmDelete">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- Dependencias externas: Supabase JS v2 + Config local -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+
+  <script>
+    (function () {
+      "use strict";
+
+      // Imagen SVG de respaldo incrustada para garantizar carga sin fallos
+      const FALLBACK_IMAGE =
+        "data:image/svg+xml;charset=UTF-8," +
+        encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">' +
+            '<rect width="640" height="400" fill="#1e293b"/>' +
+            '<rect x="20" y="20" width="600" height="360" rx="16" fill="none" stroke="#ea580c" stroke-width="3" stroke-dasharray="10 8"/>' +
+            '<g transform="translate(272,130)" fill="none" stroke="#f97316" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">' +
+              '<path d="M58 14a4 4 0 0 0 0 6l6 6a4 4 0 0 0 6 0l15-15a24 24 0 0 1-31 31L26 70a8 8 0 0 1-12-12l28-28a24 24 0 0 1 31-31L58 14z"/>' +
+            '</g>' +
+            '<text x="320" y="265" text-anchor="middle" fill="#f1f5f9" font-family="system-ui, sans-serif" font-size="22" font-weight="700">Ferretería El Tornillo</text>' +
+            '<text x="320" y="295" text-anchor="middle" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="15">Imagen no disponible</text>' +
+          "</svg>"
+        );
+
+      const LOW_STOCK_THRESHOLD = 5;
+
+      const state = {
+        proveedores: [],
+        articulos: [],
+        currentView: "inicio",
+        displayMode: "cards",
+        searchQuery: "",
+        categoryFilter: "todas",
+        onlyLowStock: false,
+        editingArticuloId: null,
+        editingProveedorId: null,
+        pendingDeleteAction: null,
+        configured: false
+      };
+
+      let supabaseClient = null;
+
+      // Utilidades de seguridad (Anti-XSS)
+      function escapeHtml(value) {
+        if (value === null || value === undefined) return "";
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function sanitizeImageUrl(url) {
+        if (!url || typeof url !== "string") return FALLBACK_IMAGE;
+        const trimmed = url.trim();
+        if (!trimmed) return FALLBACK_IMAGE;
+        try {
+          const parsed = new URL(trimmed);
+          if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+            return parsed.href;
+          }
+        } catch (e) {
+          return FALLBACK_IMAGE;
+        }
+        return FALLBACK_IMAGE;
+      }
+
+      function formatCurrency(value) {
+        const num = Number(value) || 0;
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 2
+        }).format(num);
+      }
+
+      // Notificaciones Toast
+      function showToast(message, type = "info") {
+        const container = document.getElementById("toastContainer");
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+          toast.remove();
+        }, 3600);
+      }
+
+      function setLoading(isLoading) {
+        document.getElementById("loadingBar").classList.toggle("active", isLoading);
+      }
+
+      // Tema Claro / Oscuro
+      function initTheme() {
+        const saved = localStorage.getItem("fet_theme");
+        const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const theme = saved || (prefersDark ? "dark" : "light");
+        applyTheme(theme);
+
+        document.getElementById("themeToggle").addEventListener("click", () => {
+          const current = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+          const next = current === "dark" ? "light" : "dark";
+          applyTheme(next);
+          localStorage.setItem("fet_theme", next);
+        });
+      }
+
+      function applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        document.getElementById("themeIcon").textContent = theme === "dark" ? "☀️" : "🌙";
+      }
+
+      // Navegación
+      function navigateTo(view) {
+        const valid = ["inicio", "articulos", "proveedores"];
+        const target = valid.includes(view) ? view : "inicio";
+        state.currentView = target;
+
+        document.querySelectorAll(".view-section").forEach((sec) => {
+          sec.classList.toggle("active", sec.id === `view-${target}`);
+        });
+
+        document.querySelectorAll(".nav-btn").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.nav === target);
+        });
+
+        document.getElementById("mainNav").classList.remove("open");
+        document.getElementById("menuToggle").setAttribute("aria-expanded", "false");
+
+        if (window.location.hash !== `#${target}`) {
+          history.replaceState(null, "", `#${target}`);
+        }
+      }
+
+      function initNavigation() {
+        document.querySelectorAll("[data-nav]").forEach((el) => {
+          el.addEventListener("click", (e) => {
+            e.preventDefault();
+            navigateTo(el.dataset.nav);
+          });
+        });
+
+        document.getElementById("menuToggle").addEventListener("click", () => {
+          const nav = document.getElementById("mainNav");
+          const isOpen = nav.classList.toggle("open");
+          document.getElementById("menuToggle").setAttribute("aria-expanded", String(isOpen));
+        });
+
+        document.getElementById("cardTotalArticulos").addEventListener("click", () => {
+          state.onlyLowStock = false;
+          syncFilterControls();
+          renderArticulos();
+          navigateTo("articulos");
+        });
+
+        document.getElementById("cardTotalProveedores").addEventListener("click", () => {
+          navigateTo("proveedores");
+        });
+
+        document.getElementById("cardStockBajo").addEventListener("click", () => {
+          state.onlyLowStock = true;
+          syncFilterControls();
+          renderArticulos();
+          navigateTo("articulos");
+        });
+
+        const initialHash = window.location.hash.replace("#", "");
+        if (["inicio", "articulos", "proveedores"].includes(initialHash)) {
+          navigateTo(initialHash);
+        }
+      }
+
+      // Inicialización de Supabase
+      function initSupabase() {
+        const cfg = window.APP_CONFIG || {};
+        const url = (cfg.SUPABASE_URL || "").trim();
+        const key = (cfg.SUPABASE_KEY || "").trim();
+
+        const isPlaceholder =
+          !url ||
+          !key ||
+          url.includes("tu-proyecto") ||
+          key.includes("tu-clave") ||
+          !url.startsWith("https://");
+
+        if (isPlaceholder || !window.supabase) {
+          state.configured = false;
+          document.getElementById("configBanner").classList.add("visible");
+          return false;
+        }
+
+        supabaseClient = window.supabase.createClient(url, key);
+        state.configured = true;
+        document.getElementById("configBanner").classList.remove("visible");
+        return true;
+      }
+
+      // Carga de datos desde Supabase
+      async function loadAllData() {
+        if (!state.configured) {
+          renderAll();
+          return;
+        }
+
+        setLoading(true);
+        try {
+          const [provRes, artRes] = await Promise.all([
+            supabaseClient.from("proveedores").select("*").order("nombre", { ascending: true }),
+            supabaseClient
+              .from("articulos")
+              .select("*, proveedores(id, nombre)")
+              .order("id", { ascending: false })
+          ]);
+
+          if (provRes.error) throw provRes.error;
+          if (artRes.error) throw artRes.error;
+
+          state.proveedores = provRes.data || [];
+          state.articulos = artRes.data || [];
+          populateCategoryFilter();
+          renderAll();
+        } catch (err) {
+          console.error(err);
+          showToast("Error al conectar con Supabase: " + (err.message || "Verifica tu configuración"), "error");
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      function populateCategoryFilter() {
+        const select = document.getElementById("filterCategoria");
+        const current = state.categoryFilter;
+        const categories = Array.from(new Set(state.articulos.map((a) => a.categoria).filter(Boolean))).sort();
+
+        select.innerHTML = `<option value="todas">Todas las categorías</option>` +
+          categories.map((cat) => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join("");
+
+        if (categories.includes(current)) {
+          select.value = current;
+        } else {
+          state.categoryFilter = "todas";
+          select.value = "todas";
+        }
+      }
+
+      function syncFilterControls() {
+        const btnLow = document.getElementById("btnToggleLowStock");
+        btnLow.classList.toggle("active", state.onlyLowStock);
+        btnLow.setAttribute("aria-pressed", String(state.onlyLowStock));
+      }
+
+      function renderAll() {
+        renderDashboard();
+        renderArticulos();
+        renderProveedores();
+      }
+
+      // Dashboard / Inicio
+      function renderDashboard() {
+        const totalArticulos = state.articulos.length;
+        const totalUnidades = state.articulos.reduce((acc, a) => acc + (Number(a.stock) || 0), 0);
+        const totalProveedores = state.proveedores.length;
+        const lowStockItems = state.articulos.filter((a) => Number(a.stock) <= LOW_STOCK_THRESHOLD);
+
+        document.getElementById("statTotalArticulos").textContent = String(totalArticulos);
+        document.getElementById("statTotalUnidades").textContent = `${totalUnidades} unidades en inventario`;
+        document.getElementById("statTotalProveedores").textContent = String(totalProveedores);
+        document.getElementById("statStockBajo").textContent = String(lowStockItems.length);
+
+        const alertCard = document.getElementById("cardStockBajo");
+        alertCard.classList.toggle("alert-card", lowStockItems.length > 0);
+
+        const quickList = document.getElementById("lowStockQuickList");
+        if (!state.configured) {
+          quickList.innerHTML = `<div class="empty-state">Configura <code>config.js</code> para visualizar las existencias reales desde Supabase.</div>`;
+          return;
+        }
+
+        if (lowStockItems.length === 0) {
+          quickList.innerHTML = `<div class="empty-state" style="padding:1.25rem;">Todos los artículos tienen stock suficiente (&gt; 5 unidades).</div>`;
+          return;
+        }
+
+        quickList.innerHTML = `
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Artículo</th>
+                  <th>Categoría</th>
+                  <th>Stock Actual</th>
+                  <th>Reposición Rápida</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${lowStockItems
+                  .map(
+                    (art) => `
+                  <tr class="low-stock-row">
+                    <td><strong>${escapeHtml(art.nombre)}</strong></td>
+                    <td>${escapeHtml(art.categoria)}</td>
+                    <td><span class="low-stock-text">${Number(art.stock)} u.</span></td>
+                    <td>
+                      <div class="stock-actions" style="max-width:250px;">
+                        <button type="button" class="stock-step-btn" data-stock-step="-1" data-id="${art.id}" aria-label="Disminuir stock">−</button>
+                        <input type="number" min="0" step="1" class="stock-input" value="${Number(art.stock)}" data-stock-input="${art.id}" aria-label="Cantidad de stock" />
+                        <button type="button" class="stock-apply-btn" data-stock-apply="${art.id}">Aplicar</button>
+                        <button type="button" class="stock-step-btn" data-stock-step="1" data-id="${art.id}" aria-label="Aumentar stock">+</button>
+                      </div>
+                    </td>
+                  </tr>`
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      // Filtrado de Artículos
+      function getFilteredArticulos() {
+        const q = state.searchQuery.trim().toLowerCase();
+        return state.articulos.filter((art) => {
+          const provName = art.proveedores ? art.proveedores.nombre : "";
+          const matchesSearch =
+            !q ||
+            art.nombre.toLowerCase().includes(q) ||
+            art.categoria.toLowerCase().includes(q) ||
+            provName.toLowerCase().includes(q);
+
+          const matchesCat = state.categoryFilter === "todas" || art.categoria === state.categoryFilter;
+          const matchesLow = !state.onlyLowStock || Number(art.stock) <= LOW_STOCK_THRESHOLD;
+
+          return matchesSearch && matchesCat && matchesLow;
+        });
+      }
+
+      // Renderizado de Artículos (Tarjetas o Tabla)
+      function renderArticulos() {
+        const container = document.getElementById("articulosContainer");
+
+        if (!state.configured) {
+          container.innerHTML = `<div class="panel empty-state">Configura tus credenciales en <code>config.js</code> para gestionar el catálogo de artículos.</div>`;
+          return;
+        }
+
+        const list = getFilteredArticulos();
+
+        if (list.length === 0) {
+          container.innerHTML = `
+            <div class="panel empty-state">
+              <p style="margin:0 0 0.75rem;">No se encontraron artículos con los filtros actuales.</p>
+              ${
+                state.articulos.length === 0
+                  ? `<button type="button" class="btn btn-primary" onclick="document.getElementById('btnNuevoArticulo').click()">+ Agregar primer artículo</button>`
+                  : ""
+              }
+            </div>`;
+          return;
+        }
+
+        if (state.displayMode === "table") {
+          container.innerHTML = `
+            <div class="table-card">
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Foto</th>
+                      <th>Artículo</th>
+                      <th>Categoría</th>
+                      <th>Proveedor</th>
+                      <th>Precio</th>
+                      <th>Existencias (Stock)</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${list
+                      .map((art) => {
+                        const isLow = Number(art.stock) <= LOW_STOCK_THRESHOLD;
+                        const provName = art.proveedores ? art.proveedores.nombre : "Sin proveedor";
+                        const imgSrc = sanitizeImageUrl(art.imagen_url);
+                        return `
+                          <tr class="${isLow ? "low-stock-row" : ""}">
+                            <td>
+                              <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(art.nombre)}" class="table-thumb" onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}';" />
+                            </td>
+                            <td>
+                              <strong>${escapeHtml(art.nombre)}</strong>
+                              ${isLow ? `<div><span class="low-stock-text" style="font-size:0.78rem;">Stock bajo (≤ 5)</span></div>` : ""}
+                            </td>
+                            <td>${escapeHtml(art.categoria)}</td>
+                            <td>${escapeHtml(provName)}</td>
+                            <td><strong>${formatCurrency(art.precio)}</strong></td>
+                            <td>
+                              <div class="stock-actions" style="min-width:225px;">
+                                <button type="button" class="stock-step-btn" data-stock-step="-1" data-id="${art.id}" aria-label="Disminuir stock">−</button>
+                                <input type="number" min="0" step="1" class="stock-input" value="${Number(art.stock)}" data-stock-input="${art.id}" aria-label="Stock de ${escapeHtml(art.nombre)}" />
+                                <button type="button" class="stock-apply-btn" data-stock-apply="${art.id}">Aplicar</button>
+                                <button type="button" class="stock-step-btn" data-stock-step="1" data-id="${art.id}" aria-label="Aumentar stock">+</button>
+                              </div>
+                            </td>
+                            <td>
+                              <div class="table-actions">
+                                <button type="button" class="btn btn-secondary btn-sm" data-edit-art="${art.id}">Editar</button>
+                                <button type="button" class="btn btn-danger btn-sm" data-del-art="${art.id}">Eliminar</button>
+                              </div>
+                            </td>
+                          </tr>
+                        `;
+                      })
+                      .join("")}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="cards-grid">
+            ${list
+              .map((art) => {
+                const isLow = Number(art.stock) <= LOW_STOCK_THRESHOLD;
+                const provName = art.proveedores ? art.proveedores.nombre : "Sin proveedor";
+                const imgSrc = sanitizeImageUrl(art.imagen_url);
+                return `
+                  <article class="product-card ${isLow ? "low-stock" : ""}">
+                    <div class="product-media">
+                      <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(art.nombre)}" onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}';" />
+                      <span class="category-pill">${escapeHtml(art.categoria)}</span>
+                      <span class="stock-badge ${isLow ? "low" : ""}">
+                        ${isLow ? `Stock bajo: ${Number(art.stock)}` : `Stock: ${Number(art.stock)}`}
+                      </span>
+                    </div>
+                    <div class="product-body">
+                      <h3 class="product-title">${escapeHtml(art.nombre)}</h3>
+                      <div class="product-meta">
+                        <span class="product-price">${formatCurrency(art.precio)}</span>
+                        <span class="product-supplier">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon></svg>
+                          ${escapeHtml(provName)}
+                        </span>
+                      </div>
+
+                      <div class="stock-control-box">
+                        <div class="stock-label-row ${isLow ? "low" : ""}">
+                          <span>Actualizar existencias</span>
+                          <span>${isLow ? "⚠ Reponer pronto" : "Disponible"}</span>
+                        </div>
+                        <div class="stock-actions">
+                          <button type="button" class="stock-step-btn" data-stock-step="-1" data-id="${art.id}" aria-label="Disminuir stock">−</button>
+                          <input type="number" min="0" step="1" class="stock-input" value="${Number(art.stock)}" data-stock-input="${art.id}" aria-label="Stock de ${escapeHtml(art.nombre)}" />
+                          <button type="button" class="stock-apply-btn" data-stock-apply="${art.id}">Aplicar</button>
+                          <button type="button" class="stock-step-btn" data-stock-step="1" data-id="${art.id}" aria-label="Aumentar stock">+</button>
+                        </div>
+                      </div>
+
+                      <div class="card-footer-actions">
+                        <button type="button" class="btn btn-secondary btn-sm" data-edit-art="${art.id}">Editar</button>
+                        <button type="button" class="btn btn-danger btn-sm" data-del-art="${art.id}">Eliminar</button>
+                      </div>
+                    </div>
+                  </article>
+                `;
+              })
+              .join("")}
+          </div>
+        `;
+      }
+
+      // Renderizado de Proveedores (Tabla con scroll horizontal en celular)
+      function renderProveedores() {
+        const container = document.getElementById("proveedoresContainer");
+
+        if (!state.configured) {
+          container.innerHTML = `<div class="panel empty-state">Configura tus credenciales en <code>config.js</code> para administrar los proveedores.</div>`;
+          return;
+        }
+
+        if (state.proveedores.length === 0) {
+          container.innerHTML = `
+            <div class="panel empty-state">
+              <p style="margin:0 0 0.75rem;">Aún no hay proveedores registrados.</p>
+              <button type="button" class="btn btn-primary" onclick="document.getElementById('btnNuevoProveedor').click()">+ Registrar primer proveedor</button>
+            </div>`;
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="table-card">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Artículos asociados</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${state.proveedores
+                    .map((prov) => {
+                      const count = state.articulos.filter((a) => Number(a.proveedor_id) === Number(prov.id)).length;
+                      return `
+                        <tr>
+                          <td><strong>${escapeHtml(prov.nombre)}</strong></td>
+                          <td><a href="tel:${escapeHtml(prov.telefono)}" style="color:inherit;">${escapeHtml(prov.telefono)}</a></td>
+                          <td><a href="mailto:${escapeHtml(prov.email)}" style="color:var(--accent);">${escapeHtml(prov.email)}</a></td>
+                          <td>${count} artículo${count === 1 ? "" : "s"}</td>
+                          <td>
+                            <div class="table-actions">
+                              <button type="button" class="btn btn-secondary btn-sm" data-edit-prov="${prov.id}">Editar</button>
+                              <button type="button" class="btn btn-danger btn-sm" data-del-prov="${prov.id}">Eliminar</button>
+                            </div>
+                          </td>
+                        </tr>
+                      `;
+                    })
+                    .join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+
+      // Acción principal obligatoria: Actualizar existencias (stock)
+      async function updateArticleStock(articleId, newStock) {
+        if (!state.configured) {
+          showToast("Configura Supabase en config.js primero.", "error");
+          return;
+        }
+
+        const parsed = Number(newStock);
+        if (!Number.isInteger(parsed) || parsed < 0) {
+          showToast("El stock debe ser un número entero mayor o igual a 0.", "error");
+          renderAll();
+          return;
+        }
+
+        setLoading(true);
+        try {
+          const { data, error } = await supabaseClient
+            .from("articulos")
+            .update({ stock: parsed })
+            .eq("id", articleId)
+            .select("*, proveedores(id, nombre)")
+            .single();
+
+          if (error) throw error;
+
+          const idx = state.articulos.findIndex((a) => Number(a.id) === Number(articleId));
+          if (idx !== -1) {
+            state.articulos[idx] = data;
+          }
+
+          renderAll();
+          showToast(`Stock de "${data.nombre}" actualizado a ${data.stock} unidades.`, "success");
+        } catch (err) {
+          console.error(err);
+          showToast("No se pudo actualizar el stock: " + (err.message || "Error"), "error");
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      // Modales
+      function openModal(id) {
+        document.getElementById(id).classList.add("open");
+      }
+
+      function closeModal(id) {
+        document.getElementById(id).classList.remove("open");
+      }
+
+      function showFormError(elementId, message) {
+        const el = document.getElementById(elementId);
+        if (!message) {
+          el.textContent = "";
+          el.classList.remove("visible");
+          return;
+        }
+        el.textContent = message;
+        el.classList.add("visible");
+      }
+
+      function populateSupplierSelect(selectedId = "") {
+        const select = document.getElementById("artProveedor");
+        if (state.proveedores.length === 0) {
+          select.innerHTML = `<option value="">No hay proveedores registrados</option>`;
+          return;
+        }
+        select.innerHTML =
+          `<option value="">Selecciona un proveedor</option>` +
+          state.proveedores
+            .map((p) => `<option value="${p.id}">${escapeHtml(p.nombre)}</option>`)
+            .join("");
+        select.value = selectedId ? String(selectedId) : "";
+      }
+
+      function openArticuloModal(articulo = null) {
+        if (!state.configured) {
+          showToast("Configura Supabase en config.js primero.", "error");
+          return;
+        }
+        state.editingArticuloId = articulo ? articulo.id : null;
+        document.getElementById("modalArticuloTitle").textContent = articulo ? "Editar Artículo" : "Nuevo Artículo";
+        showFormError("errorArticulo", "");
+
+        populateSupplierSelect(articulo ? articulo.proveedor_id : "");
+
+        document.getElementById("artNombre").value = articulo ? articulo.nombre : "";
+        document.getElementById("artCategoria").value = articulo ? articulo.categoria : "";
+        document.getElementById("artPrecio").value = articulo ? Number(articulo.precio) : "";
+        document.getElementById("artStock").value = articulo ? Number(articulo.stock) : "";
+        document.getElementById("artImagen").value = articulo && articulo.imagen_url ? articulo.imagen_url : "";
+
+        openModal("modalArticulo");
+      }
+
+      function openProveedorModal(proveedor = null) {
+        if (!state.configured) {
+          showToast("Configura Supabase en config.js primero.", "error");
+          return;
+        }
+        state.editingProveedorId = proveedor ? proveedor.id : null;
+        document.getElementById("modalProveedorTitle").textContent = proveedor ? "Editar Proveedor" : "Nuevo Proveedor";
+        showFormError("errorProveedor", "");
+
+        document.getElementById("provNombre").value = proveedor ? proveedor.nombre : "";
+        document.getElementById("provTelefono").value = proveedor ? proveedor.telefono : "";
+        document.getElementById("provEmail").value = proveedor ? proveedor.email : "";
+
+        openModal("modalProveedor");
+      }
+
+      function openDeleteConfirm(message, onConfirm) {
+        document.getElementById("modalConfirmMessage").textContent = message;
+        state.pendingDeleteAction = onConfirm;
+        openModal("modalConfirm");
+      }
+
+      // Guardar Artículo (Crear / Actualizar)
+      async function handleArticuloSubmit(e) {
+        e.preventDefault();
+        showFormError("errorArticulo", "");
+
+        const nombre = document.getElementById("artNombre").value.trim();
+        const categoria = document.getElementById("artCategoria").value.trim();
+        const proveedorRaw = document.getElementById("artProveedor").value;
+        const precioRaw = document.getElementById("artPrecio").value;
+        const stockRaw = document.getElementById("artStock").value;
+        const imagenRaw = document.getElementById("artImagen").value.trim();
+
+        if (!nombre) return showFormError("errorArticulo", "El nombre del artículo es obligatorio.");
+        if (!categoria) return showFormError("errorArticulo", "Debes seleccionar una categoría.");
+        if (!proveedorRaw) return showFormError("errorArticulo", "Debes seleccionar un proveedor (regístralo primero si no existe).");
+        if (precioRaw === "" || isNaN(Number(precioRaw)) || Number(precioRaw) < 0) {
+          return showFormError("errorArticulo", "El precio debe ser un número mayor o igual a 0.");
+        }
+        if (stockRaw === "" || isNaN(Number(stockRaw)) || !Number.isInteger(Number(stockRaw)) || Number(stockRaw) < 0) {
+          return showFormError("errorArticulo", "El stock debe ser un número entero mayor o igual a 0.");
+        }
+
+        if (imagenRaw) {
+          try {
+            const u = new URL(imagenRaw);
+            if (u.protocol !== "http:" && u.protocol !== "https:") {
+              return showFormError("errorArticulo", "La URL de imagen debe comenzar con http:// o https://.");
+            }
+          } catch {
+            return showFormError("errorArticulo", "La URL de imagen no tiene un formato válido.");
+          }
+        }
+
+        const payload = {
+          nombre,
+          categoria,
+          precio: Number(Number(precioRaw).toFixed(2)),
+          stock: Number(stockRaw),
+          proveedor_id: Number(proveedorRaw),
+          imagen_url: imagenRaw || null
+        };
+
+        const btn = document.getElementById("btnGuardarArticulo");
+        btn.disabled = true;
+        setLoading(true);
+
+        try {
+          if (state.editingArticuloId) {
+            const { data, error } = await supabaseClient
+              .from("articulos")
+              .update(payload)
+              .eq("id", state.editingArticuloId)
+              .select("*, proveedores(id, nombre)")
+              .single();
+
+            if (error) throw error;
+            const idx = state.articulos.findIndex((a) => Number(a.id) === Number(state.editingArticuloId));
+            if (idx !== -1) state.articulos[idx] = data;
+            showToast("Artículo actualizado correctamente.", "success");
+          } else {
+            const { data, error } = await supabaseClient
+              .from("articulos")
+              .insert(payload)
+              .select("*, proveedores(id, nombre)")
+              .single();
+
+            if (error) throw error;
+            state.articulos.unshift(data);
+            showToast("Artículo agregado correctamente.", "success");
+          }
+
+          populateCategoryFilter();
+          renderAll();
+          closeModal("modalArticulo");
+        } catch (err) {
+          console.error(err);
+          showFormError("errorArticulo", "Error al guardar en Supabase: " + (err.message || "Error inesperado"));
+        } finally {
+          btn.disabled = false;
+          setLoading(false);
+        }
+      }
+
+      // Guardar Proveedor (Crear / Actualizar)
+      async function handleProveedorSubmit(e) {
+        e.preventDefault();
+        showFormError("errorProveedor", "");
+
+        const nombre = document.getElementById("provNombre").value.trim();
+        const telefono = document.getElementById("provTelefono").value.trim();
+        const email = document.getElementById("provEmail").value.trim();
+
+        if (!nombre) return showFormError("errorProveedor", "El nombre del proveedor es obligatorio.");
+        if (!telefono) return showFormError("errorProveedor", "El teléfono es obligatorio.");
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          return showFormError("errorProveedor", "Ingresa un correo electrónico válido.");
+        }
+
+        const payload = { nombre, telefono, email };
+        const btn = document.getElementById("btnGuardarProveedor");
+        btn.disabled = true;
+        setLoading(true);
+
+        try {
+          if (state.editingProveedorId) {
+            const { data, error } = await supabaseClient
+              .from("proveedores")
+              .update(payload)
+              .eq("id", state.editingProveedorId)
+              .select()
+              .single();
+
+            if (error) throw error;
+            const idx = state.proveedores.findIndex((p) => Number(p.id) === Number(state.editingProveedorId));
+            if (idx !== -1) state.proveedores[idx] = data;
+
+            // Actualizar referencia en memoria de los artículos relacionados
+            state.articulos.forEach((a) => {
+              if (Number(a.proveedor_id) === Number(data.id)) {
+                a.proveedores = { id: data.id, nombre: data.nombre };
+              }
+            });
+
+            showToast("Proveedor actualizado correctamente.", "success");
+          } else {
+            const { data, error } = await supabaseClient
+              .from("proveedores")
+              .insert(payload)
+              .select()
+              .single();
+
+            if (error) throw error;
+            state.proveedores.push(data);
+            state.proveedores.sort((a, b) => a.nombre.localeCompare(b.nombre));
+            showToast("Proveedor agregado correctamente.", "success");
+          }
+
+          renderAll();
+          closeModal("modalProveedor");
+        } catch (err) {
+          console.error(err);
+          showFormError("errorProveedor", "Error al guardar proveedor: " + (err.message || "Error inesperado"));
+        } finally {
+          btn.disabled = false;
+          setLoading(false);
+        }
+      }
+
+      // Eliminar Artículo
+      async function deleteArticulo(id) {
+        setLoading(true);
+        try {
+          const { error } = await supabaseClient.from("articulos").delete().eq("id", id);
+          if (error) throw error;
+          state.articulos = state.articulos.filter((a) => Number(a.id) !== Number(id));
+          populateCategoryFilter();
+          renderAll();
+          showToast("Artículo eliminado.", "success");
+        } catch (err) {
+          console.error(err);
+          showToast("Error al eliminar artículo: " + (err.message || "Error"), "error");
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      // Eliminar Proveedor
+      async function deleteProveedor(id) {
+        setLoading(true);
+        try {
+          const { error } = await supabaseClient.from("proveedores").delete().eq("id", id);
+          if (error) throw error;
+          state.proveedores = state.proveedores.filter((p) => Number(p.id) !== Number(id));
+          state.articulos.forEach((a) => {
+            if (Number(a.proveedor_id) === Number(id)) {
+              a.proveedor_id = null;
+              a.proveedores = null;
+            }
+          });
+          renderAll();
+          showToast("Proveedor eliminado.", "success");
+        } catch (err) {
+          console.error(err);
+          showToast("Error al eliminar proveedor: " + (err.message || "Error"), "error");
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      // Eventos globales delegados
+      function initEvents() {
+        document.getElementById("heroImage").addEventListener("error", function () {
+          this.onerror = null;
+          this.src = FALLBACK_IMAGE;
+        });
+
+        document.getElementById("btnNuevoArticulo").addEventListener("click", () => openArticuloModal());
+        document.getElementById("btnNuevoProveedor").addEventListener("click", () => openProveedorModal());
+
+        document.getElementById("formArticulo").addEventListener("submit", handleArticuloSubmit);
+        document.getElementById("formProveedor").addEventListener("submit", handleProveedorSubmit);
+
+        document.getElementById("searchArticulos").addEventListener("input", (e) => {
+          state.searchQuery = e.target.value;
+          renderArticulos();
+        });
+
+        document.getElementById("filterCategoria").addEventListener("change", (e) => {
+          state.categoryFilter = e.target.value;
+          renderArticulos();
+        });
+
+        document.getElementById("btnToggleLowStock").addEventListener("click", () => {
+          state.onlyLowStock = !state.onlyLowStock;
+          syncFilterControls();
+          renderArticulos();
+        });
+
+        document.querySelectorAll(".view-toggle-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            state.displayMode = btn.dataset.display;
+            document.querySelectorAll(".view-toggle-btn").forEach((b) => {
+              b.classList.toggle("active", b.dataset.display === state.displayMode);
+            });
+            renderArticulos();
+          });
+        });
+
+        document.querySelectorAll("[data-close-modal]").forEach((btn) => {
+          btn.addEventListener("click", () => closeModal(btn.dataset.closeModal));
+        });
+
+        document.querySelectorAll(".modal-backdrop").forEach((backdrop) => {
+          backdrop.addEventListener("click", (e) => {
+            if (e.target === backdrop) closeModal(backdrop.id);
+          });
+        });
+
+        document.getElementById("btnConfirmDelete").addEventListener("click", async () => {
+          const action = state.pendingDeleteAction;
+          state.pendingDeleteAction = null;
+          closeModal("modalConfirm");
+          if (typeof action === "function") {
+            await action();
+          }
+        });
+
+        // Delegación para botones de stock, editar y eliminar en todo el documento
+        document.addEventListener("click", (e) => {
+          const stepBtn = e.target.closest("[data-stock-step]");
+          if (stepBtn) {
+            const id = Number(stepBtn.dataset.id);
+            const delta = Number(stepBtn.dataset.stockStep);
+            const art = state.articulos.find((a) => Number(a.id) === id);
+            if (!art) return;
+            const next = Math.max(0, Number(art.stock) + delta);
+            if (next === Number(art.stock) && delta < 0) {
+              showToast("El stock no puede ser menor a 0.", "error");
+              return;
+            }
+            updateArticleStock(id, next);
+            return;
+          }
+
+          const applyBtn = e.target.closest("[data-stock-apply]");
+          if (applyBtn) {
+            const id = Number(applyBtn.dataset.stockApply);
+            const container = applyBtn.closest(".stock-actions");
+            const input = container ? container.querySelector(`[data-stock-input="${id}"]`) : null;
+            if (input) {
+              updateArticleStock(id, input.value);
+            }
+            return;
+          }
+
+          const editArtBtn = e.target.closest("[data-edit-art]");
+          if (editArtBtn) {
+            const id = Number(editArtBtn.dataset.editArt);
+            const art = state.articulos.find((a) => Number(a.id) === id);
+            if (art) openArticuloModal(art);
+            return;
+          }
+
+          const delArtBtn = e.target.closest("[data-del-art]");
+          if (delArtBtn) {
+            const id = Number(delArtBtn.dataset.delArt);
+            const art = state.articulos.find((a) => Number(a.id) === id);
+            if (art) {
+              openDeleteConfirm(
+                `¿Seguro que deseas eliminar el artículo "${art.nombre}"? Esta acción no se puede deshacer.`,
+                () => deleteArticulo(id)
+              );
+            }
+            return;
+          }
+
+          const editProvBtn = e.target.closest("[data-edit-prov]");
+          if (editProvBtn) {
+            const id = Number(editProvBtn.dataset.editProv);
+            const prov = state.proveedores.find((p) => Number(p.id) === id);
+            if (prov) openProveedorModal(prov);
+            return;
+          }
+
+          const delProvBtn = e.target.closest("[data-del-prov]");
+          if (delProvBtn) {
+            const id = Number(delProvBtn.dataset.delProv);
+            const prov = state.proveedores.find((p) => Number(p.id) === id);
+            if (prov) {
+              openDeleteConfirm(
+                `¿Seguro que deseas eliminar al proveedor "${prov.nombre}"? Los artículos vinculados quedarán sin proveedor asignado.`,
+                () => deleteProveedor(id)
+              );
+            }
+          }
+        });
+
+        // Permitir Enter en el campo numérico de stock para aplicar directamente
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && e.target.matches("[data-stock-input]")) {
+            e.preventDefault();
+            const id = Number(e.target.dataset.stockInput);
+            updateArticleStock(id, e.target.value);
+          }
+        });
+      }
+
+      // Arranque de la aplicación
+      document.addEventListener("DOMContentLoaded", () => {
+        initTheme();
+        initNavigation();
+        initEvents();
+        initSupabase();
+        loadAllData();
+      });
+    })();
+  </script>
+</body>
+</html>

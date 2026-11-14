@@ -1,2 +1,0 @@
-const SUPABASE_URL = "https://supabase.com/dashboard/project/tpktoegogoylkyhopwca";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwa3RvZWdvZ295bGt5aG9wd2NhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ2NDA2MjgsImV4cCI6MjExMDIxNjYyOH0.jaUnaf-MPurSSthyB_9Hnh7xWrl7v004xyk3g_1Z5IY";

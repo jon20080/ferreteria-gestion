@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Gestión - Ferretería</title>
+  <!-- Fuentes e Íconos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Supabase JS Client (v2) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- BARRA LATERAL (SIDEBAR) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <i data-lucide="wrench"></i>
+          <span>FerreStock</span>
+        </div>
+        <button class="btn-icon mobile-only" id="btnCloseSidebar" aria-label="Cerrar Menú">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <ul>
+          <li>
+            <a href="#" class="nav-link active" data-view="dashboard">
+              <i data-lucide="layout-dashboard"></i>
+              <span>Panel Principal</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-link" data-view="articulos">
+              <i data-lucide="package"></i>
+              <span>Artículos y Stock</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-link" data-view="proveedores">
+              <i data-lucide="truck"></i>
+              <span>Proveedores</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="status-indicator" id="dbStatus">
+          <span class="dot"></span>
+          <span class="status-text">Modo Local (Listo para Supabase)</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+      <!-- HEADER SUPERIOR -->
+      <header class="top-header">
+        <button class="btn-icon mobile-only" id="btnOpenSidebar" aria-label="Abrir Menú">
+          <i data-lucide="menu"></i>
+        </button>
+        <div class="header-title">
+          <h1 id="pageTitle">Panel de Control</h1>
+          <p id="pageSubtitle">Resumen de inventario y existencias</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="btnOpenNewItemModal">
+            <i data-lucide="plus"></i>
+            <span>Nuevo Artículo</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- VISTA: DASHBOARD -->
+      <section id="viewDashboard" class="view-section active">
+        <!-- Tarjetas de Estadísticas -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon bg-blue">
+              <i data-lucide="boxes"></i>
+            </div>
+            <div class="stat-info">
+              <h3>Total Artículos</h3>
+              <p class="stat-value" id="statTotalArticulos">0</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon bg-amber">
+              <i data-lucide="alert-triangle"></i>
+            </div>
+            <div class="stat-info">
+              <h3>Stock Bajo / Mínimo</h3>
+              <p class="stat-value" id="statStockBajo">0</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon bg-emerald">
+              <i data-lucide="users"></i>
+            </div>
+            <div class="stat-info">
+              <h3>Proveedores Activos</h3>
+              <p class="stat-value" id="statTotalProveedores">0</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon bg-red">
+              <i data-lucide="shield-alert"></i>
+            </div>
+            <div class="stat-info">
+              <h3>Sin Existencias</h3>
+              <p class="stat-value" id="statSinStock">0</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acceso Rápido / Actividad -->
+        <div class="card recent-section">
+          <div class="card-header">
+            <h2>Artículos Críticos que Requieren Reabastecimiento</h2>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Artículo</th>
+                  <th>Stock Actual</th>
+                  <th>Stock Mínimo</th>
+                  <th>Proveedor</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="criticalStockTableBody">
+                <!-- Generado por JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA: ARTÍCULOS Y STOCK -->
+      <section id="viewArticulos" class="view-section">
+        <div class="card">
+          <!-- Filtros y Buscador -->
+          <div class="table-toolbar">
+            <div class="search-box">
+              <i data-lucide="search"></i>
+              <input type="text" id="searchInput" placeholder="Buscar por código, nombre o categoría...">
+            </div>
+            <div class="toolbar-actions">
+              <select id="filterCategory" class="form-select">
+                <option value="all">Todas las Categorías</option>
+                <option value="Herramientas">Herramientas</option>
+                <option value="Tornillería">Tornillería</option>
+                <option value="Pinturas">Pinturas</option>
+                <option value="Plomería">Plomería</option>
+                <option value="Electricidad">Electricidad</option>
+                <option value="Construcción">Construcción</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tabla de Artículos -->
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Nombre del Artículo</th>
+                  <th>Categoría</th>
+                  <th>Precio Venta</th>
+                  <th>Stock Actual</th>
+                  <th>Proveedor</th>
+                  <th>Estado</th>
+                  <th class="text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="articulosTableBody">
+                <!-- Se llena dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA: PROVEEDORES -->
+      <section id="viewProveedores" class="view-section">
+        <div class="card">
+          <div class="card-header flex-between">
+            <h2>Directorio de Proveedores</h2>
+            <button class="btn btn-secondary" id="btnOpenNewProveedorModal">
+              <i data-lucide="user-plus"></i>
+              <span>Nuevo Proveedor</span>
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nombre / Empresa</th>
+                  <th>Contacto</th>
+                  <th>Teléfono</th>
+                  <th>Correo</th>
+                  <th>Dirección</th>
+                  <th class="text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="proveedoresTableBody">
+                <!-- Se llena dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL: REGISTRAR / EDITAR ARTÍCULO -->
+  <div class="modal-backdrop" id="modalArticulo">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modalArticuloTitle">Registrar Artículo</h3>
+        <button class="btn-icon" data-close-modal><i data-lucide="x"></i></button>
+      </div>
+      <form id="formArticulo">
+        <input type="hidden" id="articuloId">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="articuloCodigo">Código / SKU *</label>
+              <input type="text" id="articuloCodigo" class="form-input" required placeholder="Ej. HER-001">
+            </div>
+            <div class="form-group">
+              <label for="articuloCategoria">Categoría *</label>
+              <select id="articuloCategoria" class="form-select" required>
+                <option value="">Seleccione...</option>
+                <option value="Herramientas">Herramientas</option>
+                <option value="Tornillería">Tornillería</option>
+                <option value="Pinturas">Pinturas</option>
+                <option value="Plomería">Plomería</option>
+                <option value="Electricidad">Electricidad</option>
+                <option value="Construcción">Construcción</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="articuloNombre">Nombre del Artículo *</label>
+            <input type="text" id="articuloNombre" class="form-input" required placeholder="Ej. Martillo de Uña 16oz">
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="articuloPrecioCompra">Precio Compra ($)</label>
+              <input type="number" step="0.01" min="0" id="articuloPrecioCompra" class="form-input" placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label for="articuloPrecioVenta">Precio Venta ($) *</label>
+              <input type="number" step="0.01" min="0" id="articuloPrecioVenta" class="form-input" required placeholder="0.00">
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="articuloStock">Stock Inicial / Actual *</label>
+              <input type="number" min="0" id="articuloStock" class="form-input" required placeholder="0">
+            </div>
+            <div class="form-group">
+              <label for="articuloStockMinimo">Stock Mínimo (Alerta) *</label>
+              <input type="number" min="0" id="articuloStockMinimo" class="form-input" required placeholder="5">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="articuloProveedor">Proveedor Asignado</label>
+            <select id="articuloProveedor" class="form-select">
+              <option value="">Sin proveedor asignado</option>
+              <!-- Opciones dinámicas de proveedores -->
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close-modal>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Artículo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ACTUALIZAR EXISTENCIAS (ACCIÓN CLAVE DE LA FERRETERÍA) -->
+  <div class="modal-backdrop" id="modalStock">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h3>Actualizar Existencias</h3>
+        <button class="btn-icon" data-close-modal><i data-lucide="x"></i></button>
+      </div>
+      <form id="formActualizarStock">
+        <input type="hidden" id="stockArticuloId">
+        <div class="modal-body">
+          <p class="stock-item-label" id="stockItemName">Artículo</p>
+          <div class="stock-current-display">
+            <span>Stock Actual:</span>
+            <strong id="stockItemCurrent">0</strong>
+          </div>
+
+          <div class="form-group">
+            <label for="stockTipoMovimiento">Tipo de Movimiento</label>
+            <select id="stockTipoMovimiento" class="form-select">
+              <option value="entrada">Entrada (+) - Compra / Devolución</option>
+              <option value="salida">Salida (-) - Venta / Merma</option>
+              <option value="ajuste">Ajuste Directo (=)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="stockCantidad">Cantidad a Aplicar *</label>
+            <input type="number" min="1" id="stockCantidad" class="form-input" required placeholder="Ej. 10">
+          </div>
+
+          <div class="form-group">
+            <label for="stockMotivo">Motivo o Referencia (Opcional)</label>
+            <input type="text" id="stockMotivo" class="form-input" placeholder="Ej. Factura #402 o rotura">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close-modal>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Aplicar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CONSULTAR DETALLE DEL ARTÍCULO -->
+  <div class="modal-backdrop" id="modalConsultar">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Detalles del Artículo</h3>
+        <button class="btn-icon" data-close-modal><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-list" id="consultarDetalleContent">
+          <!-- Detalle dinámico -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-close-modal>Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: REGISTRAR / EDITAR PROVEEDOR -->
+  <div class="modal-backdrop" id="modalProveedor">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modalProveedorTitle">Registrar Proveedor</h3>
+        <button class="btn-icon" data-close-modal><i data-lucide="x"></i></button>
+      </div>
+      <form id="formProveedor">
+        <input type="hidden" id="proveedorId">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="proveedorNombre">Nombre de la Empresa o Razón Social *</label>
+            <input type="text" id="proveedorNombre" class="form-input" required placeholder="Ej. Distribuidora Metales del Norte">
+          </div>
+          <div class="form-group">
+            <label for="proveedorContacto">Persona de Contacto</label>
+            <input type="text" id="proveedorContacto" class="form-input" placeholder="Ej. Carlos Mendoza">
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="proveedorTelefono">Teléfono</label>
+              <input type="tel" id="proveedorTelefono" class="form-input" placeholder="Ej. +595 981 123456">
+            </div>
+            <div class="form-group">
+              <label for="proveedorEmail">Correo Electrónico</label>
+              <input type="email" id="proveedorEmail" class="form-input" placeholder="contacto@empresa.com">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="proveedorDireccion">Dirección</label>
+            <input type="text" id="proveedorDireccion" class="form-input" placeholder="Av. Principal #123">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close-modal>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Proveedor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN PARA ELIMINAR -->
+  <div class="modal-backdrop" id="modalConfirmarEliminar">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h3 class="text-danger">Confirmar Eliminación</h3>
+        <button class="btn-icon" data-close-modal><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmarEliminarMensaje">¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-close-modal>Cancelar</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmarEliminarAccion">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENEDOR DE MENSAJES TOAST -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- SCRIPTS -->
+  <script src="supabaseClient.js"></script>
+  <script src="app.js"></script>
+</body>
+                                                                       </html>
